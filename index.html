@@ -25,7 +25,7 @@
             </div>
 
             <div class="main-container" id="notmain">
-                <div class="card-title">
+                <div class="title card-title">
                     <h2>11/14</h2>
                     <button class="add-button" onclick="showModal(add_schedule_modal)"><i class="fa-solid fa-plus"></i></button>
                 </div>
@@ -40,7 +40,10 @@
 
         <div class="modal-wrapper" id="add_schedule_modal">
             <div class="modal-content">
-                <h2>11/14 예약</h2>
+                <div class="title">
+                    <h2>11/14 예약</h2>
+                    <button onclick="hideModal(add_schedule_modal)"><i class="fa-solid fa-x"></i></button>
+                </div>
                 <div class="form">
                     <div class="form-inline-group">
                         <label>시작 시각</label>
