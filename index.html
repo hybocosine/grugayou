@@ -1,0 +1,259 @@
+<html>
+    <head>
+        <title>Fall in US!</title>
+        <meta name="viewport" content="width=device-width">
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="/lib/css/index.css">
+        <script src="https://kit.fontawesome.com/04ed03d0b6.js" crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <div class="top-container">
+            <div class="nav-container">
+                <img class="logo-img" src="/lib/img/logo.png" onclick="location.href='/'"/>
+                <div class="date-title">
+                    <h3><i class="fa-solid fa-arrow-left"></i>&nbsp&nbsp</h3>
+                    <h3 id="title_year">2024</h3>
+                    <h3>&nbsp/&nbsp</h3>
+                    <h3 id="title_month">11</h3>
+                    <h3>&nbsp&nbsp<i class="fa-solid fa-arrow-right"></i></h3>
+                </div>
+            </div>
+
+            <div class="main-container" id="main">
+                <div class="calendar-container">
+                </div>
+            </div>
+
+            <div class="main-container" id="notmain">
+                <div class="card-title">
+                    <h2>11/14</h2>
+                    <button class="add-button" onclick="showModal(add_schedule_modal)"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <table class="time-table-container">
+                    <tr>
+                        <td><h3>시간</h3></td>
+                        <td><h3>예약현황</h3></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal-wrapper" id="add_schedule_modal">
+            <div class="modal-content">
+                <h2>11/14 예약</h2>
+                <div class="form">
+                    <div class="form-inline-group">
+                        <label>시작 시각</label>
+                        <select class="form-control" id="start_time_selector">
+                        </select>
+                    </div>
+                    <div class="form-inline-group">
+                        <label>연습 시간</label>
+                        <select class="form-control">
+                            <option>30분</option>
+                            <option>1시간</option>
+                            <option>1시간 30분</option>
+                            <option>2시간</option>
+                            <option>2시간 30분</option>
+                            <option>3시간</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label style="margin-right:10px;">유형</label>
+                        <input type="radio" name="type" value="합주"/>
+                        <label>합주</label>
+                        <input type="radio" name="type" value="개인"/>
+                        <label>개인</label>
+                    </div>
+                    <div class="form-group">
+                        <label>예약 내용</label>
+                        <input class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>학번</label>
+                        <input class="form-control">
+                    </div>
+                </div>
+                <p style="margin:10px 0px 0px 0px; font-size:0.8em;">* 합주일 경우 곡 제목을, 개인일 경우 이름과 세션을 기입해주세요</p>
+                <button class="new-resv-btn btn-colored">추가하기</button>
+            </div>
+            <div class="modal-background" onclick="hideModal(add_schedule_modal);"></div>
+        </div>
+    </body>
+</html>
+
+<script>
+    currentYear = 2024;
+    currentMonth
+</script>
+
+<script>
+    function showModal(modal) {
+        modal.style.display="flex";
+    }
+
+    function hideModal(modal) {
+        modal.style.display="none";
+    }
+
+    function showTimeTable(num) {
+        main.style.display="none";
+        notmain.style.display="flex";
+    }
+</script>
+
+<script comment="CALENDAR RENDERER">
+    sauce = '<div class="calendar-cell-title"><h5>{days}</h5></div>';
+    days = ["일", "월", "화", "수", "목", "금", "토"];
+    for (i = 0; i < 7; i++)
+        document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{days}", days[i]);
+
+
+    sauce = '<div class="calendar-cell" onclick="showTimeTable({num})"><div class="calendar-cell-date">{num}</div></div>';
+    num=1;
+    const year = 2024;
+    const month = 13;
+    const firstDay = new Date(year, month - 1, 1).getDay();
+    const daysInMonth = new Date(year, month, 0).getDate()
+    const totalCells = 42;
+
+    for (i=0; i<firstDay; i++) {
+        document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{num}", "");
+    }
+    
+    for (i = 0; i < totalCells; i++){
+        if(i >= firstDay && num <= daysInMonth){
+            document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{num}", num++);}
+        }
+</script>
+
+<script comment="TABLE RENDERER">
+    function giveStringHour(hour) {
+        if (hour < 0) 
+            hour = 0;
+        if (hour < 10) {
+            return "0"+String(hour);
+        }
+        return String(hour);
+    }
+    table_hour = 0; 
+    table_minute = ["00", "30"];
+    sauce_for_table = '<tr>' + 
+                        '<td>{yees}</td>' + 
+                        '<td></td>' + 
+                    '</tr>';
+    for (i=0; i<48; i++) {
+        if (i%2 == 0) {
+            yees = giveStringHour(table_hour) + ":" + table_minute[i%2] + "-" + giveStringHour(table_hour) + ":" + table_minute[(i+1)%2];
+        } else {
+            yees = giveStringHour(table_hour) + ":" + table_minute[i%2] + "-" + giveStringHour(++table_hour) + ":" + table_minute[(i+1)%2];
+        }
+        document.querySelector(".time-table-container").innerHTML += sauce_for_table.replace("{yees}", yees);
+    }
+    
+    selector_hour = 0;
+    selector_minute = ["00", "30"];
+    sauce_for_selector = '<option>{yees}</option>';
+    for (i=0; i<48; i++) {
+        if (i%2 == 0) {
+            yees = giveStringHour(selector_hour) + ":" + selector_minute[i%2];
+        } else {
+            yees = giveStringHour(selector_hour) + ":" + selector_minute[i%2];
+            selector_hour++;
+        }
+        document.querySelector("#start_time_selector").innerHTML += sauce_for_selector.replace("{yees}", yees);
+    }
+</script>
+
+<script comment="USELESS">
+    /*
+    fetch('https://ummai.cosh.kr/api/users/userInfo')
+    .then((res) => {return res.json()})
+    .then((res) => {
+        if (res["result"] != "success") {
+            fetch('https://ummai.cosh.kr/api/users/logout')
+            alert("something went wrong... please visit later...")
+            location.go("/login");
+            return;
+        }
+        p_name.innerText = res["info"]["name"];
+        p_major.innerText = res["info"]["major"];
+        p_country.innerText = res["info"]["country"];
+        p_img.src = res["info"]["img"];
+    });
+
+    fetch('https://ummai.cosh.kr/api/board/article')
+    .then((res) => {return res.json()})
+    .then((res) => {
+        if (res["result"] != "success") {
+            fetch('https://ummai.cosh.kr/api/users/logout')
+            alert("something went wrong... please visit later...")
+            location.go("/login");
+            return;
+        }
+        
+        var listBox = document.querySelector(".tip-list")
+        lim = res["count"] > 5 ? 5 : res["count"];
+        for (i = 0; i < lim; i++) {
+            article = res["articles"][i]
+            listBox.innerHTML = listBox.innerHTML +
+                    '<div class="tip-row" onclick="location.href=\'/article?article_id='+article["article_id"]+'\'">' +
+                    '    <div class="tip-title">'+article["title"]+'</div>' +
+                    '    <div class="tip-time">'+article["postTime"]+'</div>' +
+                    '</div>'
+        }
+    });
+    
+    async function suggestion() {
+        const filter_no = Math.floor(Math.random() * 4) + 1;
+        
+        let filter = '';
+        switch(filter_no) {
+            case 1:
+                filter = 'all';
+                break;
+            case 2:
+                filter = 'major';
+                break;
+            case 3:
+                filter = 'college';
+                break;
+            case 4:
+                filter = 'country';
+                break;
+            default:
+                filter = null;
+                break; 
+        }
+
+        const result = await fetch(`https://ummai.cosh.kr/api/users/userInfo/randomSuggestion/${filter}`)
+        res = await result.json();
+        
+        if (res["result"] != "success") {
+            //fetch('https://ummai.cosh.kr/api/users/logout')
+            //alert("something went wrong... please visit later...")
+            //location.go("/login");
+            return;
+        }
+
+        suggBox = document.querySelector(".sugg-list")
+        lim = res["count"] > 5 ? 5 : res["count"];
+        for (i = 0; i < lim; i++) {
+            user = res["info"][i];
+            suggBox.innerHTML = suggBox.innerHTML +
+                '<div class="sugg-box" onclick="location.href=\'/chatView?target='+user["id"]+'\'">' +
+                    '<div class="sugg-row">'+
+                        '<div class="sugg-name">'+
+                            '<b>'+user["name"]+' </b>'+
+                            '<small> '+user["id"]+'</small>'+
+                        '</div>'+
+                        '<span class="sugg-country">'+user["country"]+'</span>' +
+                    '</div>'+
+                    '<div class="sugg-row"><small>major: '+user["major"]+'</small></div>'+
+                    '<div class="sugg-row sugg-intro">"'+user["introduction"]+'"</div>'+
+                '</div>'
+        }
+    }
+    suggestion();
+    */
+</script>
