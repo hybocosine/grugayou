@@ -47,50 +47,55 @@
                 <div class="form">
                     <div class="form-inline-group">
                         <label>시작 시각</label>
-                        <select class="form-control" id="start_time_selector">
+                        <select class="form-control" id="start_time_input">
+                            <option></option>
                         </select>
                     </div>
                     <div class="form-inline-group">
                         <label>연습 시간</label>
-                        <select class="form-control">
-                            <option>30분</option>
-                            <option>1시간</option>
-                            <option>1시간 30분</option>
-                            <option>2시간</option>
-                            <option>2시간 30분</option>
-                            <option>3시간</option>
+                        <select class="form-control" id="duration_input">
+                            <option></option>
+                            <option value=1>30분</option>
+                            <option value=2>1시간</option>
+                            <option value=3>1시간 30분</option>
+                            <option value=4>2시간</option>
+                            <option value=5>2시간 30분</option>
+                            <option value=6>3시간</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label style="margin-right:10px;">유형</label>
-                        <input type="radio" name="type" value="합주" id="type_radio_group" />
-                        <label for="type_radio_group" style="margin-right:4px;">합주</label>
-                        <input type="radio" name="type" value="개인" id="type_radio_personal" />
-                        <label for="type_radio_personal">개인</label>
+
+                        <input type="radio" name="type" value="합주" id="type_radio_group_input" />
+                        <label for="type_radio_group_input" style="margin-right:4px;">합주</label>
+
+                        <input type="radio" name="type" value="개인" id="type_radio_personal_input"/>
+                        <label for="type_radio_personal_input">개인</label>
                     </div>
                     <div class="form-group">
                         <label>예약 내용</label>
-                        <input class="form-control">
+                        <input class="form-control" id="resv_content_input">
                     </div>
                     <div class="form-group">
                         <label>학번</label>
-                        <input class="form-control">
+                        <input class="form-control" id="std_id_input">
                     </div>
                 </div>
                 <p style="margin:10px 0px 0px 0px; font-size:0.8em;">* 합주일 경우 곡 제목을, 개인일 경우 이름과 세션을 기입해주세요</p>
-                <button class="new-resv-btn btn-colored">추가하기</button>
+                <button class="new-resv-btn btn-colored" onclick="makeResv();">추가하기</button>
             </div>
             <div class="modal-background" onclick="hideModal(add_schedule_modal);"></div>
         </div>
     </body>
 </html>
 
-<script>
-    currentYear = 2024;
-    currentMonth
+<script comment="Global variable Definition">
+    currentYear = "2024";
+    currentMonth = "01";
+    currentDay = "01";
 </script>
 
-<script>
+<script comment="Function Definition">
     function showModal(modal) {
         modal.style.display="flex";
     }
@@ -103,7 +108,105 @@
         main.style.display="none";
         notmain.style.display="flex";
     }
+
+    async function makeResv() {
+        /*
+        시작 시간: YYYY-MM-DD:hh:mm으로 표현
+        연습 시간: 30분 간격 표현 -> 실제 연습시간 = duration * 30분
+        유형: 미선택시 -1, 합주 0, 개인 1
+        */
+        startTime = start_time_input.value;
+        duration = duration_input.value;
+        selected = type_radio_group_input.checked ? 0 : (type_radio_personal_input.checked ? 1 : -1);
+        content = resv_content_input.value;
+        std_id = std_id_input.value;
+
+        // 공백 확인
+        if (startTime == "" || duration == "" || selected == -1 || content == "" || std_id == "") {
+            alert("내용을 모두 기입해주세요.");
+            return false;
+        }
+        
+        // startTime 검증 및 값 갱신
+        if ( startTime.length != 5 || startTime[2] != ":"
+                || isNaN(startTime.substring(0,2)) || Number(startTime.substring(0,2)) < 0 || Number(startTime.substring(0,2)) > 23
+                || isNaN(startTime.substring(3,5)) || (startTime.substring(3,5) != "00" && startTime.substring(3,5) != "30") ) {
+            alert("올바르지 않은 시작 시각입니다.");
+            return false;
+        }
+        startTime = currentYear + "-" + currentMonth + "-" + currentDay + " " + startTime;
+
+        // duration 검증 및 값 갱신
+        if (isNaN(duration) || duration < 1 || duration > 6) {
+            alert("올바르지 않은 연습 시간입니다.");
+            return false;
+        }
+        duration = Number(duration);
+
+        // std_id 검증 및 값 갱신
+        if (isNaN(std_id) || std_id.length != 10) {
+            alert("올바르지 않은 학번입니다.");
+            return false;
+        }
+        std_id = Number(std_id);
+
+        if ( !confirm("예약 내용을 확인해주세요!\n" +
+                        "\n연습 시작 일시:" + startTime +
+                        "\n연습 시간: " + (duration==1?"30분":(Math.floor((duration * 30)/60)+"시간"+((duration%2)==1?" 30분":""))) +
+                        "\n연습 유형: " + (selected==0?"합주":"개인") +
+                        "\n예약 내용: " + content +
+                        "\n예약자 학번: " + std_id )) {
+            alert("예약이 취소되었습니다.");
+            return false;
+        }
+
+        console.log(startTime);
+        console.log(duration);
+        console.log(selected);
+        console.log(content);
+        console.log(std_id);
+        
+        requestJson = {
+            "time":startTime,
+            "duration":duration,
+            "type":selected,
+            "content":content,
+            "std_id":std_id
+        };
+
+        res = await fetch('/api/reservation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include', // 쿠키를 포함하여 요청
+                body: JSON.stringify(requestJson)
+            });
+        
+        if (!res.ok) {
+            alert("서버가 정상적으로 응답하지 않습니다.");
+            return false;
+        }
+
+        data = await res.json();
+
+        console.log(data);
+    }
 </script>
+
+<!-- IMSI -->
+<script>
+    window.onload = () => {
+        showModal(add_schedule_modal);
+        start_time_input.value="12:00";
+        duration_input.value=2;
+        type_radio_group_input.checked=true;
+        resv_content_input.value="너무 아픈 사랑은 사랑이 아니었음을";
+        std_id_input.value="2023019516"
+    };
+</script>
+
+<!-- Maybe nothing to edit -->
 
 <script comment="CALENDAR RENDERER">
     sauce = '<div class="calendar-cell-title"><h5>{days}</h5></div>';
@@ -164,7 +267,7 @@
             yees = giveStringHour(selector_hour) + ":" + selector_minute[i%2];
             selector_hour++;
         }
-        document.querySelector("#start_time_selector").innerHTML += sauce_for_selector.replace("{yees}", yees);
+        document.querySelector("#start_time_input").innerHTML += sauce_for_selector.replace("{yees}", yees);
     }
 </script>
 
