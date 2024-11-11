@@ -4,7 +4,7 @@ then
     echo usage: ./pusher.sh {commit message}
 else
     echo commit message: $@
-    git add *
+    git add .
     git commit -m "$@"
     git push origin master
 fi
