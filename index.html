@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>Fall in US!</title>
+        <title>그루가유: Grugayou</title>
         <meta name="viewport" content="width=device-width">
         <meta charset="utf-8">
         <link rel="stylesheet" href="/lib/css/index.css">
@@ -11,11 +11,11 @@
             <div class="nav-container">
                 <img class="logo-img" src="/lib/img/logo.png" onclick="location.href='/'"/>
                 <div class="date-title">
-                    <h3><i class="fa-solid fa-arrow-left"></i>&nbsp&nbsp</h3>
-                    <h3 id="title_year">2024</h3>
+                    <h3 onclick="moveMonth(-1);"><i class="fa-solid fa-arrow-left"></i>&nbsp&nbsp</h3>
+                    <h3 class="year-text">2024</h3>
                     <h3>&nbsp/&nbsp</h3>
-                    <h3 id="title_month">11</h3>
-                    <h3>&nbsp&nbsp<i class="fa-solid fa-arrow-right"></i></h3>
+                    <h3 class="month-text">11</h3>
+                    <h3 onclick="moveMonth(1);">&nbsp&nbsp<i class="fa-solid fa-arrow-right"></i></h3>
                 </div>
             </div>
 
@@ -26,14 +26,10 @@
 
             <div class="main-container" id="notmain">
                 <div class="title card-title">
-                    <h2>11/14</h2>
+                    <h2><text class="month-text"></text>/<text class="day-text"></text></h2>
                     <button class="add-button" onclick="showModal(add_schedule_modal)"><i class="fa-solid fa-plus"></i></button>
                 </div>
                 <table class="time-table-container">
-                    <tr>
-                        <td><h3>시간</h3></td>
-                        <td><h3>예약현황</h3></td>
-                    </tr>
                 </table>
             </div>
         </div>
@@ -41,8 +37,8 @@
         <div class="modal-wrapper" id="add_schedule_modal">
             <div class="modal-content">
                 <div class="title">
-                    <h2>11/14 예약</h2>
-                    <button onclick="hideModal(add_schedule_modal)"><i class="fa-solid fa-x"></i></button>
+                    <h2><text class="month-text"></text>/<text class="day-text"></text> 예약</h2>
+                    <button onclick="hideModal(add_schedule_modal)" style="box-shadow: none;"><i class="fa-solid fa-x"></i></button>
                 </div>
                 <div class="form">
                     <div class="form-inline-group">
@@ -90,9 +86,14 @@
 </html>
 
 <script comment="Global variable Definition">
-    currentYear = "2024";
-    currentMonth = "01";
-    currentDay = "01";
+    currentYear = new Date().getFullYear();
+    currentMonth = String(new Date().getMonth()+1);
+    currentDay = "00";
+
+    monthTexts = document.querySelectorAll(".month-text");
+    for (i = 0; i < monthTexts.length; i++) {
+        monthTexts[i].innerText=currentMonth;
+    }
 </script>
 
 <script comment="Function Definition">
@@ -104,7 +105,47 @@
         modal.style.display="none";
     }
 
+    function twoDigitNum(n) {
+        if (n < 0) 
+            n = 0;
+        if (n < 10) {
+            return "0"+String(n);
+        }
+        return String(n);
+    }
+
+    function moveMonth(offset) {
+        if (Number(currentMonth) + offset > 12) {
+            currentYear+= (Math.floor((offset-1)/12)+1);
+        } else if (Number(currentMonth) + offset < 1) {
+            currentYear += Math.floor(offset/12);
+        }
+        currentMonth = twoDigitNum(((currentMonth-1+offset+12)%12)+1);
+
+        yearTexts = document.querySelectorAll(".year-text");
+        for (i = 0; i < yearTexts.length; i++) {
+            yearTexts[i].innerText=currentYear;
+        }
+
+        monthTexts = document.querySelectorAll(".month-text");
+        for (i = 0; i < monthTexts.length; i++) {
+            monthTexts[i].innerText=currentMonth;
+        }
+        
+        drawCalendar();
+    }
+
     function showTimeTable(num) {
+        currentDay = twoDigitNum(num);
+        document.querySelector(".date-title").style.display="none";
+
+        dayTexts = document.querySelectorAll(".day-text");
+        for (i = 0; i < dayTexts.length; i++) {
+            dayTexts[i].innerText=currentDay;
+        }
+
+        drawTimeTable();
+        
         main.style.display="none";
         notmain.style.display="flex";
     }
@@ -197,6 +238,8 @@
 <!-- IMSI -->
 <script>
     window.onload = () => {
+        return false;
+        showTimeTable(12);
         showModal(add_schedule_modal);
         start_time_input.value="12:00";
         duration_input.value=2;
@@ -209,65 +252,98 @@
 <!-- Maybe nothing to edit -->
 
 <script comment="CALENDAR RENDERER">
-    sauce = '<div class="calendar-cell-title"><h5>{days}</h5></div>';
-    days = ["일", "월", "화", "수", "목", "금", "토"];
-    for (i = 0; i < 7; i++)
-        document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{days}", days[i]);
+    function drawCalendar() {
+        document.querySelector(".calendar-container").innerHTML = "";
 
+        sauce = '<div class="calendar-cell-title"><h5>{days}</h5></div>';
+        days = ["일", "월", "화", "수", "목", "금", "토"];
+        for (i = 0; i < 7; i++)
+            document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{days}", days[i]);
+        
+        sauce = '<div class="calendar-cell" onclick="showTimeTable({num})"><div class="calendar-cell-date">{num}</div></div>';
+        num=1;
+        const year = currentYear;
+        const month = currentMonth;
+        const firstDay = new Date(year, month - 1, 1).getDay();
+        const daysInMonth = new Date(year, month, 0).getDate()
+        const totalCells = 42;
 
-    sauce = '<div class="calendar-cell" onclick="showTimeTable({num})"><div class="calendar-cell-date">{num}</div></div>';
-    num=1;
-    const year = 2024;
-    const month = 13;
-    const firstDay = new Date(year, month - 1, 1).getDay();
-    const daysInMonth = new Date(year, month, 0).getDate()
-    const totalCells = 42;
-
-    for (i=0; i<firstDay; i++) {
-        document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{num}", "");
-    }
-    
-    for (i = 0; i < totalCells; i++){
-        if(i >= firstDay && num <= daysInMonth){
-            document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{num}", num++);}
+        for (i=0; i<firstDay; i++) {
+            document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{num}", "");
         }
+        
+        for (i = 0; i < totalCells; i++) {
+            if(i >= firstDay && num <= daysInMonth){
+                document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{num}", num++);
+            }
+        }
+    }
+    drawCalendar();
 </script>
 
 <script comment="TABLE RENDERER">
-    function giveStringHour(hour) {
-        if (hour < 0) 
-            hour = 0;
-        if (hour < 10) {
-            return "0"+String(hour);
+    async function drawTimeTable() {
+        res = await fetch('/api/reservation?date='+String(currentYear)+String(currentMonth)+String(currentDay));
+        res = await res.json();
+
+        if (res["status"] != "success") {
+            alert("something went wrong...")
+            return;
         }
-        return String(hour);
-    }
-    table_hour = 0; 
-    table_minute = ["00", "30"];
-    sauce_for_table = '<tr>' + 
-                        '<td>{yees}</td>' + 
-                        '<td></td>' + 
-                    '</tr>';
-    for (i=0; i<48; i++) {
-        if (i%2 == 0) {
-            yees = giveStringHour(table_hour) + ":" + table_minute[i%2] + "-" + giveStringHour(table_hour) + ":" + table_minute[(i+1)%2];
-        } else {
-            yees = giveStringHour(table_hour) + ":" + table_minute[i%2] + "-" + giveStringHour(++table_hour) + ":" + table_minute[(i+1)%2];
+        total_time_slice = res["count"];
+        schedules = res["reservation"];
+
+        reserved_table = {};
+        for (i = 0; i < schedules.length; i++) {
+            schedule = schedules[i];
+            schedule_name = schedule["content"];
+            schedule_times = schedule["times"];
+            for (j = 0; j < schedule_times.length; j++) {
+                reserved_table[schedule_times[j]] = schedule_name;
+            }
         }
-        document.querySelector(".time-table-container").innerHTML += sauce_for_table.replace("{yees}", yees);
-    }
-    
-    selector_hour = 0;
-    selector_minute = ["00", "30"];
-    sauce_for_selector = '<option>{yees}</option>';
-    for (i=0; i<48; i++) {
-        if (i%2 == 0) {
-            yees = giveStringHour(selector_hour) + ":" + selector_minute[i%2];
-        } else {
-            yees = giveStringHour(selector_hour) + ":" + selector_minute[i%2];
-            selector_hour++;
+
+        document.querySelector(".time-table-container").innerHTML = '<tr>' +
+                                                                    '   <td><h3>시간</h3></td>' +
+                                                                    '   <td><h3>예약현황</h3></td>' +
+                                                                    '</tr>';
+
+        table_hour = 0; 
+        table_minute = ["00", "30"];
+        sauce_for_table = '<tr>' + 
+                            '<td>{time}</td>' + 
+                            '<td>{content}</td>' + 
+                        '</tr>';
+        
+        for (i=0; i<48; i++) {
+            base_time = twoDigitNum(table_hour) + ":" + table_minute[i%2];
+            if (i%2 == 0) {
+                time = base_time + "-" + twoDigitNum(table_hour) + ":" + table_minute[(i+1)%2];
+            } else {
+                time = base_time + "-" + twoDigitNum(++table_hour) + ":" + table_minute[(i+1)%2];
+            }
+
+            content = "";
+            if (Object.keys(reserved_table).indexOf(base_time) >= 0) {
+                content = reserved_table[base_time];
+            }
+
+            document.querySelector(".time-table-container").innerHTML += sauce_for_table.replace("{time}", time).replace("{content}", content);
         }
-        document.querySelector("#start_time_input").innerHTML += sauce_for_selector.replace("{yees}", yees);
+        
+        // Modal Selector Filler
+        selector_hour = 0;
+        selector_minute = ["00", "30"];
+        sauce_for_selector = '<option>{yees}</option>';
+        for (i=0; i<48; i++) {
+            if (i%2 == 0) {
+                yees = twoDigitNum(selector_hour) + ":" + selector_minute[i%2];
+            } else {
+                yees = twoDigitNum(selector_hour) + ":" + selector_minute[i%2];
+                selector_hour++;
+            }
+            document.querySelector("#start_time_input").innerHTML += sauce_for_selector.replace("{yees}", yees);
+        }
     }
 </script>
 
