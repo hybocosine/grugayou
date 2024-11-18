@@ -30,6 +30,8 @@
                     <button class="add-button" onclick="showModal(add_schedule_modal)"><i class="fa-solid fa-plus"></i></button>
                 </div>
                 <table class="time-table-container">
+                    <tbody class="time-table-body">
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -233,13 +235,34 @@
 
         console.log(data);
     }
+
+    // Example: addLClickHandler(document.querySelector(".calendar-cell"), () => {alert(1)});
+    function addLClickHandler(target, callback) {
+        target.oncontextmenu = () => {
+            return false;
+        }
+
+        target.onmousedown = () => {
+            if ((event.button === 2)||(event.which === 3)) {
+                callback();
+            }
+        };
+
+        target.ontouchstart = () => {
+            const timer = setTimeout(callback, 300);
+        
+            target.ontouchend = () => {
+            clearTimeout(timer);
+            };
+        };  
+    }
 </script>
 
 <!-- IMSI -->
 <script>
     window.onload = () => {
+        //showTimeTable(12);
         return false;
-        showTimeTable(12);
         showModal(add_schedule_modal);
         start_time_input.value="12:00";
         duration_input.value=2;
@@ -260,7 +283,7 @@
         for (i = 0; i < 7; i++)
             document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{days}", days[i]);
         
-        sauce = '<div class="calendar-cell" onclick="showTimeTable({num})"><div class="calendar-cell-date">{num}</div></div>';
+        sauce = '<div class="calendar-cell"><div class="calendar-cell-date">{num}</div></div>';
         num=1;
         const year = currentYear;
         const month = currentMonth;
@@ -271,7 +294,8 @@
         for (i=0; i<firstDay; i++) {
             document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{num}", "");
         }
-        
+
+        sauce = '<div class="calendar-cell" onclick="showTimeTable({num})"><div class="calendar-cell-date">{num}</div></div>';
         for (i = 0; i < totalCells; i++) {
             if(i >= firstDay && num <= daysInMonth){
                 document.querySelector(".calendar-container").innerHTML += sauce.replaceAll("{num}", num++);
@@ -292,29 +316,55 @@
         }
         total_time_slice = res["count"];
         schedules = res["reservation"];
-
+        
+        
         reserved_table = {};
         for (i = 0; i < schedules.length; i++) {
             schedule = schedules[i];
             schedule_name = schedule["content"];
             schedule_times = schedule["times"];
-            for (j = 0; j < schedule_times.length; j++) {
-                reserved_table[schedule_times[j]] = schedule_name;
-            }
+            schedule_duration = schedule_times.length;
+            reserved_table[schedule_times[0]] = {"content":schedule_name, "duration":schedule_duration};
         }
 
-        document.querySelector(".time-table-container").innerHTML = '<tr>' +
+        document.querySelector(".time-table-body").innerHTML = '<tr>' +
                                                                     '   <td><h3>시간</h3></td>' +
                                                                     '   <td><h3>예약현황</h3></td>' +
                                                                     '</tr>';
-
+        
         table_hour = 0; 
         table_minute = ["00", "30"];
-        sauce_for_table = '<tr>' + 
-                            '<td>{time}</td>' + 
-                            '<td>{content}</td>' + 
-                        '</tr>';
+        sauce_for_table_empty = '<tr><td>{time}</td><td rowspan={duration}></td></tr>';
+        sauce_for_table_reserved = '<tr><td>{time}</td></tr>';
+        sauce_for_table = '<tr><td>{time}</td><td rowspan={duration}>{content}</td></tr>';
         
+        count = 0;
+        i=0;
+        if (reserved_table.length == 0) {
+            next_count=48;
+        } else {
+            next_time = Object.keys(reserved_table)[0];
+            next_name = reserved_table[next_time]["content"];
+            
+            console.log(next_time);
+
+            fake_table_hour = "0";
+            fake_step = 0;
+            while (fake_table_hour != next_time) {
+                base_time = twoDigitNum(fake_table_hour) + ":" + table_minute[fake_step%2];
+                if (fake_step%2 == 0) {
+                    time = base_time + "-" + twoDigitNum(fake_table_hour) + ":" + table_minute[(fake_step+1)%2];
+                } else {
+                    time = base_time + "-" + twoDigitNum(++fake_table_hour) + ":" + table_minute[(fake_step+1)%2];
+                }
+
+                if (base_time == next_time) {
+                    break;
+                }
+                fake_step++;
+            }
+            next_count = fake_step - i - count-1;
+        }
         for (i=0; i<48; i++) {
             base_time = twoDigitNum(table_hour) + ":" + table_minute[i%2];
             if (i%2 == 0) {
@@ -323,12 +373,86 @@
                 time = base_time + "-" + twoDigitNum(++table_hour) + ":" + table_minute[(i+1)%2];
             }
 
-            content = "";
-            if (Object.keys(reserved_table).indexOf(base_time) >= 0) {
-                content = reserved_table[base_time];
+            indexOfThisTime = Object.keys(reserved_table).indexOf(base_time);
+            if (indexOfThisTime >= 0) {
+                content = reserved_table[base_time]["content"];
+                duration = reserved_table[base_time]["duration"];
+                document.querySelector(".time-table-body").innerHTML += sauce_for_table.replace("{time}", time).replace("{content}", content).replace("{duration}", duration);
+                count = duration-1;
+
+                if (indexOfThisTime+1 < Object.keys(reserved_table).length) {
+                    next_time = Object.keys(reserved_table)[indexOfThisTime+1];
+                    next_name = reserved_table[next_time]["content"];
+                } else {
+                    next_time = "24:00";
+                }
+                
+                fake_table_hour = "0";
+                fake_step = 0;
+                while (fake_table_hour != next_time) {
+                    base_time = twoDigitNum(fake_table_hour) + ":" + table_minute[fake_step%2];
+                    if (fake_step%2 == 0) {
+                        time = base_time + "-" + twoDigitNum(fake_table_hour) + ":" + table_minute[(fake_step+1)%2];
+                    } else {
+                        time = base_time + "-" + twoDigitNum(++fake_table_hour) + ":" + table_minute[(fake_step+1)%2];
+                    }
+
+                    if (base_time == next_time) {
+                        break;
+                    }
+                    fake_step++;
+                }
+                next_count = fake_step - i - count-1;
+            } else {
+                if (count > 0) {
+                    document.querySelector(".time-table-body").innerHTML += sauce_for_table_reserved.replace("{time}", time);
+                    count--;
+                } else {
+                    document.querySelector(".time-table-body").innerHTML += sauce_for_table_empty.replace("{time}", time).replace("{duration}", next_count);
+                    count = next_count;
+                }
+            }
+        }
+
+        // Legacy code, rendering all cells time by time.
+        if (false) {
+            reserved_table = {};
+            for (i = 0; i < schedules.length; i++) {
+                schedule = schedules[i];
+                schedule_name = schedule["content"];
+                schedule_times = schedule["times"];
+                for (j = 0; j < schedule_times.length; j++) {
+                    reserved_table[schedule_times[j]] = schedule_name;
+                }
             }
 
-            document.querySelector(".time-table-container").innerHTML += sauce_for_table.replace("{time}", time).replace("{content}", content);
+            document.querySelector(".time-table-body").innerHTML = '<tr>' +
+                                                                        '   <td><h3>시간</h3></td>' +
+                                                                        '   <td><h3>예약현황</h3></td>' +
+                                                                        '</tr>';
+
+            table_hour = 0; 
+            table_minute = ["00", "30"];
+            sauce_for_table = '<tr>' + 
+                                '<td>{time}</td>' + 
+                                '<td>{content}</td>' + 
+                            '</tr>';
+            
+            for (i=0; i<48; i++) {
+                base_time = twoDigitNum(table_hour) + ":" + table_minute[i%2];
+                if (i%2 == 0) {
+                    time = base_time + "-" + twoDigitNum(table_hour) + ":" + table_minute[(i+1)%2];
+                } else {
+                    time = base_time + "-" + twoDigitNum(++table_hour) + ":" + table_minute[(i+1)%2];
+                }
+
+                content = "";
+                if (Object.keys(reserved_table).indexOf(base_time) >= 0) {
+                    content = reserved_table[base_time];
+                }
+
+                document.querySelector(".time-table-body").innerHTML += sauce_for_table.replace("{time}", time).replace("{content}", content);
+            }
         }
         
         // Modal Selector Filler
